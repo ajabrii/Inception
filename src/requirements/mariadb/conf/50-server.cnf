@@ -1,0 +1,64 @@
+[client]
+port            = 3306
+socket          = /var/run/mysqld/mysqld.sock
+
+[mysqld_safe]
+socket          = /var/run/mysqld/mysqld.sock
+nice            = 0
+
+[mysqld]
+user            = mysql
+pid-file        = /var/run/mysqld/mysqld.pid
+socket          = /var/run/mysqld/mysqld.sock
+port            = 3306
+basedir         = /usr
+datadir         = /var/lib/mysql
+tmpdir          = /tmp
+lc-messages-dir = /usr/share/mysql
+skip-external-locking
+
+# Fine-tuning
+max_connections         = 100
+connect_timeout         = 5
+wait_timeout            = 600
+max_allowed_packet      = 64M
+thread_cache_size       = 128
+sort_buffer_size        = 4M
+read_buffer_size        = 1M
+read_rnd_buffer_size    = 4M
+myisam_sort_buffer_size = 64M
+
+# Logging
+log_error               = /var/log/mysql/error.log
+slow_query_log          = 1
+slow_query_log_file     = /var/log/mysql/mariadb-slow.log
+long_query_time         = 10
+
+# Character set
+character-set-server    = utf8mb4
+collation-server        = utf8mb4_general_ci
+
+# Storage Engines
+default_storage_engine  = InnoDB
+innodb_file_per_table   = 1
+innodb_buffer_pool_size = 512M
+innodb_log_file_size    = 128M
+innodb_flush_log_at_trx_commit = 1
+
+# Security
+skip-symbolic-links
+bind-address = 0.0.0.0
+
+[mysqldump]
+quick
+quote-names
+max_allowed_packet      = 64M
+
+[mysql]
+no-auto-rehash
+default-character-set = utf8mb4
+
+[isamchk]
+key_buffer              = 16M
+
+!includedir /etc/mysql/conf.d/
