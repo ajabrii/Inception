@@ -1,6 +1,6 @@
 FROM debian:bullseye
 
-RUN apt install -y wget php php-fpm php-mysql mariadb-client
+RUN apt update -y && apt install -y wget php php-fpm php-mysql mariadb-client
 
 RUN		wget https://wordpress.org/wordpress-6.8.1.tar.gz -P /var/www
 
@@ -16,8 +16,8 @@ RUN chmod 755 wp-cli.phar
 
 RUN		mv wp-cli.phar /usr/local/bin/wp
 
-COPY 	tools/wpconfig.sh /
+COPY 	tools/wpconfig.sh /wpconfig.sh
 
-RUN chmod +x tools/wpconfig.sh # //!maybe this is not important to do !!
+RUN chmod +x /wpconfig.sh 
 
-RUN ["bash","wpconfig.sh"]
+CMD ["bash","/wpconfig.sh"]
