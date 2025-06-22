@@ -45,20 +45,27 @@ class ChatPin {
   }
 
   waitForChatGPTInterface() {
-    // Wait for the sidebar to appear
+    // Wait for the sidebar to appear and stabilize
     const checkForSidebar = () => {
       const sidebar = document.querySelector('nav[aria-label="Chat history"]') ||
-                    document.querySelector('div[data-testid="conversation-turn-3"]')?.closest('nav') ||
-                    document.querySelector('nav div[class*="flex"][class*="flex-col"]');
+                    document.querySelector('nav');
 
-      if (sidebar) {
-        this.setupInterface();
+      if (sidebar && document.readyState === 'complete') {
+        // Add a small delay to let React finish rendering
+        setTimeout(() => {
+          this.setupInterface();
+        }, 500);
       } else {
         setTimeout(checkForSidebar, 1000);
       }
     };
 
-    checkForSidebar();
+    // Wait for DOM to be ready
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', checkForSidebar);
+    } else {
+      checkForSidebar();
+    }
   }
 
   setupInterface() {
@@ -127,23 +134,44 @@ class ChatPin {
   }
 
   setupChatObserver() {
-    // Observe changes to the chat list
+    // Use a more careful observer that doesn't interfere with React
     const sidebar = document.querySelector('nav[aria-label="Chat history"]') ||
                    document.querySelector('nav');
 
     if (!sidebar) return;
 
+    // Debounce function to avoid too many updates
+    let timeoutId;
+    const debouncedProcess = () => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        this.processChatItems();
+      }, 300);
+    };
+
     this.observer = new MutationObserver((mutations) => {
       let shouldProcess = false;
 
       mutations.forEach((mutation) => {
+        // Only process if new chat items are added
         if (mutation.addedNodes.length > 0) {
-          shouldProcess = true;
+          for (let node of mutation.addedNodes) {
+            if (node.nodeType === Node.ELEMENT_NODE) {
+              // Check if it's a chat item or contains chat items
+              if (node.querySelector && (
+                node.matches('a[href*="/c/"]') ||
+                node.querySelector('a[href*="/c/"]')
+              )) {
+                shouldProcess = true;
+                break;
+              }
+            }
+          }
         }
       });
 
       if (shouldProcess) {
-        setTimeout(() => this.processChatItems(), 100);
+        debouncedProcess();
       }
     });
 
@@ -177,9 +205,18 @@ class ChatPin {
     const chatId = this.extractChatId(chatItem);
     if (!chatId) return;
 
-    // Create controls container
+    // Store chat ID on the item for filtering
+    chatItem.setAttribute('data-chat-id', chatId);
+
+    // Use a more React-friendly approach - add controls as overlay
+    this.addControlsOverlay(chatItem, chatId);
+  }
+
+  addControlsOverlay(chatItem, chatId) {
+    // Create controls as an overlay that doesn't modify React's DOM structure
     const controlsContainer = document.createElement('div');
-    controlsContainer.className = 'chatpin-controls';
+    controlsContainer.className = 'chatpin-controls-overlay';
+    controlsContainer.setAttribute('data-chat-id', chatId);
 
     // Create pin button
     const pinBtn = document.createElement('button');
@@ -206,63 +243,12 @@ class ChatPin {
     controlsContainer.appendChild(pinBtn);
     controlsContainer.appendChild(favBtn);
 
-    // Find the best place to insert controls
-    const insertTarget = this.findInsertionPoint(chatItem);
-    if (insertTarget) {
-      insertTarget.appendChild(controlsContainer);
-    }
-
-    // Store chat ID on the item for filtering
-    chatItem.setAttribute('data-chat-id', chatId);
+    // Position the overlay relative to the chat item
+    chatItem.style.position = 'relative';
+    chatItem.appendChild(controlsContainer);
   }
 
-  findInsertionPoint(chatItem) {
-    // Try to find a good insertion point within the chat item
-    // Look for the main content area or create a wrapper
-
-    // If it's an anchor tag, wrap its contents
-    if (chatItem.tagName === 'A') {
-      const wrapper = document.createElement('div');
-      wrapper.className = 'chatpin-item-wrapper';
-      wrapper.style.cssText = 'display: flex; align-items: center; justify-content: space-between; width: 100%;';
-
-      // Move existing content to wrapper
-      const existingContent = document.createElement('div');
-      existingContent.className = 'chatpin-original-content';
-      existingContent.style.cssText = 'flex: 1; min-width: 0;';
-
-      while (chatItem.firstChild) {
-        existingContent.appendChild(chatItem.firstChild);
-      }
-
-      wrapper.appendChild(existingContent);
-      chatItem.appendChild(wrapper);
-
-      return wrapper;
-    }
-
-    // For other elements, try to find or create a suitable container
-    let container = chatItem.querySelector('.chatpin-item-wrapper');
-    if (!container) {
-      container = document.createElement('div');
-      container.className = 'chatpin-item-wrapper';
-      container.style.cssText = 'display: flex; align-items: center; justify-content: space-between; width: 100%;';
-
-      const existingContent = document.createElement('div');
-      existingContent.className = 'chatpin-original-content';
-      existingContent.style.cssText = 'flex: 1; min-width: 0;';
-
-      // Move existing children
-      while (chatItem.firstChild) {
-        existingContent.appendChild(chatItem.firstChild);
-      }
-
-      container.appendChild(existingContent);
-      chatItem.appendChild(container);
-    }
-
-    return container;
-  }
+  // Remove the findInsertionPoint method as we're using overlays now
 
   extractChatId(chatItem) {
     // Try to get chat ID from href
@@ -343,19 +329,59 @@ class ChatPin {
   }
 }
 
-// Initialize ChatPin when the page loads
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => new ChatPin());
-} else {
-  new ChatPin();
-}
+// Initialize ChatPin with better error handling
+(() => {
+  // Prevent multiple initializations
+  if (window.chatPinInstance) {
+    return;
+  }
 
-// Handle navigation changes (SPA routing)
+  // Wait for page to be ready
+  const initChatPin = () => {
+    try {
+      window.chatPinInstance = new ChatPin();
+    } catch (error) {
+      console.error('ChatPin initialization error:', error);
+      // Retry after a delay
+      setTimeout(initChatPin, 2000);
+    }
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initChatPin);
+  } else {
+    // Add delay to avoid conflicts with React
+    setTimeout(initChatPin, 1000);
+  }
+})();
+
+// Handle SPA navigation more carefully
 let lastUrl = location.href;
-new MutationObserver(() => {
+const urlObserver = new MutationObserver(() => {
   const url = location.href;
   if (url !== lastUrl) {
     lastUrl = url;
-    setTimeout(() => new ChatPin(), 1000);
+    // Reset and reinitialize on navigation
+    if (window.chatPinInstance && window.chatPinInstance.observer) {
+      window.chatPinInstance.observer.disconnect();
+    }
+    window.chatPinInstance = null;
+    setTimeout(() => {
+      const initChatPin = () => {
+        try {
+          window.chatPinInstance = new ChatPin();
+        } catch (error) {
+          console.error('ChatPin re-initialization error:', error);
+        }
+      };
+      initChatPin();
+    }, 1500);
   }
-}).observe(document, { subtree: true, childList: true });
+});
+
+urlObserver.observe(document.body, {
+  childList: true,
+  subtree: true,
+  attributes: false,
+  characterData: false
+});

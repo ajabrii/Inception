@@ -97,4 +97,316 @@
       background: #0d8f6b;
     }
 
-    .btn-secondary
+    .btn-secondary {
+      background: #f8f9fa;
+      color: #495057;
+      border: 1px solid #dee2e6;
+    }
+
+    .btn-secondary:hover {
+      background: #e9ecef;
+    }
+
+    .btn-danger {
+      background: #dc3545;
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background: #c82333;
+    }
+
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .divider {
+      height: 1px;
+      background: #dee2e6;
+      margin: 16px 0;
+    }
+
+    .footer {
+      padding: 16px 20px;
+      background: #f8f9fa;
+      border-top: 1px solid #dee2e6;
+      text-align: center;
+      font-size: 12px;
+      color: #6c757d;
+    }
+
+    .loading {
+      display: none;
+      text-align: center;
+      padding: 20px;
+      color: #6c757d;
+    }
+
+    .loading.show {
+      display: block;
+    }
+
+    .success-message, .error-message {
+      padding: 8px 12px;
+      border-radius: 4px;
+      font-size: 12px;
+      margin-bottom: 12px;
+      display: none;
+    }
+
+    .success-message {
+      background: #d1edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+
+    .error-message {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+
+    .success-message.show, .error-message.show {
+      display: block;
+    }
+
+    .version {
+      font-size: 11px;
+      opacity: 0.7;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>📌 ChatPin</h1>
+    <p>Organize your ChatGPT conversations</p>
+  </div>
+
+  <div class="content">
+    <div class="success-message" id="successMessage"></div>
+    <div class="error-message" id="errorMessage"></div>
+
+    <div class="loading" id="loading">
+      Loading stats...
+    </div>
+
+    <div class="stats-grid" id="statsGrid">
+      <div class="stat-card">
+        <div class="stat-number" id="pinnedCount">0</div>
+        <div class="stat-label">Pinned</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-number" id="favoriteCount">0</div>
+        <div class="stat-label">Favorites</div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-primary" id="openChatGPT">
+        Open ChatGPT
+      </button>
+
+      <div class="divider"></div>
+
+      <button class="btn btn-secondary" id="exportData">
+        Export Data
+      </button>
+
+      <button class="btn btn-secondary" id="importData">
+        Import Data
+      </button>
+
+      <div class="divider"></div>
+
+      <button class="btn btn-danger" id="resetData">
+        Reset All Data
+      </button>
+    </div>
+
+    <input type="file" id="fileInput" accept=".json" style="display: none;">
+  </div>
+
+  <div class="footer">
+    <div>ChatPin Extension</div>
+    <div class="version" id="version">v1.0.0</div>
+  </div>
+
+  <script>
+    class ChatPinPopup {
+      constructor() {
+        this.init();
+      }
+
+      async init() {
+        await this.loadStats();
+        this.setupEventListeners();
+        this.setVersion();
+      }
+
+      async loadStats() {
+        const loading = document.getElementById('loading');
+        const statsGrid = document.getElementById('statsGrid');
+
+        loading.classList.add('show');
+        statsGrid.style.display = 'none';
+
+        try {
+          const stats = await this.sendMessage({ type: 'GET_STATS' });
+
+          document.getElementById('pinnedCount').textContent = stats.pinnedCount || 0;
+          document.getElementById('favoriteCount').textContent = stats.favoriteCount || 0;
+
+          loading.classList.remove('show');
+          statsGrid.style.display = 'grid';
+        } catch (error) {
+          console.error('Error loading stats:', error);
+          this.showError('Failed to load statistics');
+          loading.classList.remove('show');
+          statsGrid.style.display = 'grid';
+        }
+      }
+
+      setupEventListeners() {
+        // Open ChatGPT
+        document.getElementById('openChatGPT').addEventListener('click', () => {
+          chrome.tabs.create({ url: 'https://chat.openai.com' });
+          window.close();
+        });
+
+        // Export data
+        document.getElementById('exportData').addEventListener('click', () => {
+          this.exportData();
+        });
+
+        // Import data
+        document.getElementById('importData').addEventListener('click', () => {
+          document.getElementById('fileInput').click();
+        });
+
+        // File input change
+        document.getElementById('fileInput').addEventListener('change', (e) => {
+          this.importData(e.target.files[0]);
+        });
+
+        // Reset data
+        document.getElementById('resetData').addEventListener('click', () => {
+          this.resetData();
+        });
+      }
+
+      async exportData() {
+        try {
+          const result = await this.sendMessage({ type: 'EXPORT_DATA' });
+
+          if (result.success) {
+            const blob = new Blob([JSON.stringify(result.data, null, 2)], {
+              type: 'application/json'
+            });
+
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `chatpin-backup-${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+
+            URL.revokeObjectURL(url);
+            this.showSuccess('Data exported successfully');
+          } else {
+            this.showError('Failed to export data');
+          }
+        } catch (error) {
+          console.error('Export error:', error);
+          this.showError('Failed to export data');
+        }
+      }
+
+      async importData(file) {
+        if (!file) return;
+
+        try {
+          const text = await file.text();
+          const data = JSON.parse(text);
+
+          const result = await this.sendMessage({
+            type: 'IMPORT_DATA',
+            data: data
+          });
+
+          if (result.success) {
+            this.showSuccess('Data imported successfully');
+            await this.loadStats();
+          } else {
+            this.showError('Failed to import data: ' + (result.error || 'Unknown error'));
+          }
+        } catch (error) {
+          console.error('Import error:', error);
+          this.showError('Invalid file format');
+        }
+      }
+
+      async resetData() {
+        if (!confirm('Are you sure you want to reset all ChatPin data? This cannot be undone.')) {
+          return;
+        }
+
+        try {
+          const result = await this.sendMessage({ type: 'RESET_DATA' });
+
+          if (result.success) {
+            this.showSuccess('All data has been reset');
+            await this.loadStats();
+          } else {
+            this.showError('Failed to reset data');
+          }
+        } catch (error) {
+          console.error('Reset error:', error);
+          this.showError('Failed to reset data');
+        }
+      }
+
+      sendMessage(message) {
+        return new Promise((resolve, reject) => {
+          chrome.runtime.sendMessage(message, (response) => {
+            if (chrome.runtime.lastError) {
+              reject(chrome.runtime.lastError);
+            } else {
+              resolve(response);
+            }
+          });
+        });
+      }
+
+      showSuccess(message) {
+        const element = document.getElementById('successMessage');
+        element.textContent = message;
+        element.classList.add('show');
+
+        setTimeout(() => {
+          element.classList.remove('show');
+        }, 3000);
+      }
+
+      showError(message) {
+        const element = document.getElementById('errorMessage');
+        element.textContent = message;
+        element.classList.add('show');
+
+        setTimeout(() => {
+          element.classList.remove('show');
+        }, 3000);
+      }
+
+      setVersion() {
+        const manifest = chrome.runtime.getManifest();
+        document.getElementById('version').textContent = `v${manifest.version}`;
+      }
+    }
+
+    // Initialize popup when DOM is loaded
+    document.addEventListener('DOMContentLoaded', () => {
+      new ChatPinPopup();
+    });
+  </script>
+</body>
+</html>
