@@ -1,44 +1,23 @@
-# Use Debian 11 (Bullseye) as the base operating system
 FROM debian:bullseye
 
-# Update package lists and install required packages:
-# - wget: download files from internet
-# - php: PHP runtime engine
-# - php-fpm: FastCGI Process Manager for PHP (communicates with nginx)
-# - php-mysql: PHP extension to connect to MySQL/MariaDB
-# - mariadb-client: MySQL client tools to connect to database
 RUN apt update -y && apt install -y wget php php-fpm php-mysql mariadb-client
 
-# Download WordPress 6.8.1 archive to /var/www directory
 RUN		wget https://wordpress.org/wordpress-6.8.1.tar.gz -P /var/www
 
-# Extract WordPress archive, then delete the .tar.gz file to save space
 RUN 	cd /var/www && tar -xzf wordpress-6.8.1.tar.gz && rm wordpress-6.8.1.tar.gz
 
-# Set proper permissions (read/write/execute for owner, read/execute for group/others)
-# This allows web server to access WordPress files
 RUN		chmod -R 755 /var/www/wordpress
 
-# Copy custom PHP-FPM configuration file
-# This configures how PHP processes handle requests from nginx
 COPY 	conf/www.conf /etc/php/7.4/fpm/pool.d/www.conf
 
-# Download WP-CLI (WordPress Command Line Interface)
-# Tool for managing WordPress from command line
 RUN		wget https://raw.githubusercontent.com/wp-cli/builds/gh-pages/phar/wp-cli.phar
 
-# Make WP-CLI executable
 RUN chmod 755 wp-cli.phar
 
-# Move WP-CLI to system PATH so it can be called as 'wp' command
 RUN		mv wp-cli.phar /usr/local/bin/wp
 
-# Copy WordPress configuration script to container
 COPY 	tools/wpconfig.sh /wpconfig.sh
 
-# Make the configuration script executable
 RUN chmod +x /wpconfig.sh 
 
-# Run the WordPress configuration script when container starts
-# This script likely sets up wp-config.php and starts PHP-FPM
 CMD ["bash","/wpconfig.sh"]
