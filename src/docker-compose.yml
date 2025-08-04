@@ -36,7 +36,12 @@ services:
       - wordpress
     networks:
       - inception_net
-
+  website:
+    build: ./requirements/bonus/Website
+    container_name: website
+    restart: always
+    ports:
+      - "8080:80"
 volumes:
   wp_data:
   db_data:
