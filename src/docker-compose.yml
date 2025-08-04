@@ -54,6 +54,14 @@ services:
     ports:
       - "21:21"
       - "21100-21110:21100-21110"
+  redis:
+    build: ./requirements/bonus/redis
+    container_name: redis
+    restart: always
+    networks:
+      - inception_net
+    ports:
+      - "6379:6379"
 
 volumes:
   wp_data:
