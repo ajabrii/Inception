@@ -62,10 +62,29 @@ services:
       - inception_net
     ports:
       - "6379:6379"
-
+  adminer:
+    build: ./requirements/bonus/adminer
+    container_name: adminer
+    restart: always
+    ports:
+      - "8081:8080"
+    networks:
+      - inception_net
+  portainer:
+    build: ./requirements/bonus/portainer
+    container_name: portainer
+    restart: always
+    ports:
+      - "9999:9999"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+    networks:
+      - inception_net
 volumes:
   wp_data:
   db_data:
+  portainer_data:
 
 networks:
   inception_net:
