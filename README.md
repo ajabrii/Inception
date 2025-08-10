@@ -284,17 +284,5 @@ make down        # keep volumes
 make fclean      # remove everything (images + volumes)
 ```
 
-## 22. Extensibility Ideas
-
-- Add Prometheus + Grafana for metrics
-- Add Fail2Ban / ModSecurity in front of Nginx
-- Implement automatic SSL via ACME (staging)
-- Add mail service (Postfix + mailhog)
-
-## 23. License & Attribution
-
-Educational project (42 Inception). All trademarks belong to their respective owners.
-
----
 
 Happy containerizing.
