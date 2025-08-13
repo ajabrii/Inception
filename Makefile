@@ -29,5 +29,5 @@ fclean:
 	@$(COMPOSE) -f $(COMPOSE_FILE) down -v --rmi all --remove-orphans
 
 # 🔁 Full rebuild
-rebuild: fclean
+re: fclean
 	@$(MAKE) up
