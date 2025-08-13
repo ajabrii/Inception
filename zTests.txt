@@ -1,23 +1,23 @@
-Ensure that NGINX can be accessed by port 443 only. Once done, open the page.
-Ensure that a SSL/TLS certificate is used.
-Ensure that the WordPress website is properly installed and configured (you shouldn't see the WordPress Installation page). To access it, open https://login.42.fr in your browser, where login is the login of the evaluated student. You shouldn't be able to access the site via
-http://login.42.fr. If something doesn't work as expected, the evaluation process ends now.
+(done)  Ensure that NGINX can be accessed by port 443 only. Once done, open the page.
+(done!)  Ensure that a SSL/TLS certificate is used.
+(done)  Ensure that the WordPress website is properly installed and configured (you shouldn't see the WordPress Installation page). To access it, open https://login.42.fr in your browser, where login is the login of the evaluated student. You shouldn't be able to access the site via
+            http://login.42.fr. If something doesn't work as expected, the evaluation process ends now.
 
 
 
-The Docker images must have the same name as their corresponding service. Otherwise, the evaluation process ends now.
+(done)The Docker images must have the same name as their corresponding service. Otherwise, the evaluation process ends now.
 
-NGINX with SSL/TLS
+(done)NGINX with SSL/TLS
 
-Ensure that there is a Dockerfile.
+(done)Ensure that there is a Dockerfile.
 Using the 'docker compose ps' command, ensure that the container was created (using the flag '-p' is authorized if necessary).
-Try to access the service via http (port 80) and verify that you cannot connect.
-Open https://login.42.fr/ in your browser, where login is the login of the evaluated student. The displayed page must be the configured WordPress website (you shouldn't see the WordPress Installation page).
-The use of a TLS v1.2/v1.3 certificate is mandatory and must be demonstrated. The SSL/TLS certificate doesn't have to be recognized. A self-signed certificate warning may appear. If any of the above points is not clearly explained and correct, the evaluation process ends now.
+(done)Try to access the service via http (port 80) and verify that you cannot connect.
+(done)Open https://login.42.fr/ in your browser, where login is the login of the evaluated student. The displayed page must be the configured WordPress website (you shouldn't see the WordPress Installation page).
+(done!)The use of a TLS v1.2/v1.3 certificate is mandatory and must be demonstrated. The SSL/TLS certificate doesn't have to be recognized. A self-signed certificate warning may appear. If any of the above points is not clearly explained and correct, the evaluation process ends now.
 
 
 
-!!!!
+!!!!(done)
 This part is pretty straightforward. You have to reboot the virtual machine.
 Once it has restarted, launch docker compose again. Then, verify that everything is functional, and that both WordPress and MariaDB are configured.
 The changes you made previously to the WordPress website should still be here.
