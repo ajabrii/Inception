@@ -91,7 +91,14 @@ services:
       - portainer_data:/data
     networks:
       - inception_net
+
 volumes:
+  portainer_data:
+    driver: local
+    driver_opts:
+      type: none
+      device: /home/ajabri/data/portainer
+      o: bind
 
   wp_data:
     driver: local
@@ -106,8 +113,6 @@ volumes:
       type: none
       device: /home/ajabri/data/mariadb
       o: bind
-
-  portainer_data:
 
 networks:
   inception_net:
