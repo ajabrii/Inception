@@ -1,13 +1,25 @@
+#!/bin/bash
 
- #!/bin/bash
-
-# Wait for MariaDB to be ready
 while ! mariadb -h mariadb -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" --silent; do
     echo "⏳ Waiting for MariaDB to be ready..."
     sleep 2
 done
 
 echo "✅ MariaDB connection established!"
+
+# Fix file permissions and ownership FIRST (after volume mount)
+echo "🔧 Setting proper file permissions..."
+chown -R www-data:www-data /var/www/wordpress
+chmod -R 755 /var/www/wordpress
+chmod -R 775 /var/www/wordpress/wp-content
+
+# Create necessary directories with proper permissions
+mkdir -p /var/www/wordpress/wp-content/uploads
+mkdir -p /var/www/wordpress/wp-content/upgrade
+chown -R www-data:www-data /var/www/wordpress/wp-content
+chmod -R 775 /var/www/wordpress/wp-content
+
+echo "✅ File permissions set correctly!"
 
 # Configure WordPress with wp-cli
 echo "⚙️  Creating wp-config.php..."
