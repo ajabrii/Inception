@@ -12,7 +12,7 @@ services:
     networks:
       - inception_net
     ports:
-      -3306:3306
+      - "3306:3306"
 
   wordpress:
     build: ./requirements/wordpress
