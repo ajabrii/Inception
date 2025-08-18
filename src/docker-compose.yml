@@ -11,6 +11,8 @@ services:
       - db_data:/var/lib/mysql
     networks:
       - inception_net
+    ports:
+      -3306:3306
 
   wordpress:
     build: ./requirements/wordpress
