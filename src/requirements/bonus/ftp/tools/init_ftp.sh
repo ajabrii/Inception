@@ -1,4 +1,3 @@
-
 #!/bin/sh
 
 # Ensure WordPress directory exists
