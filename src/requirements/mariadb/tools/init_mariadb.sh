@@ -50,6 +50,7 @@ until mysqladmin ping >/dev/null 2>&1; do
 done
 
 mysql -u root -p"${MYSQL_ROOT_PASSWORD}" <<EOF
+ALTER USER 'root'@'localhost' IDENTIFIED BY '${MYSQL_ROOT_PASSWORD}';
 ALTER USER '${MYSQL_USER}'@'%' IDENTIFIED BY '${MYSQL_PASSWORD}';
 FLUSH PRIVILEGES;
 EOF
