@@ -65,7 +65,7 @@ services:
       - inception_net
     ports:
       - "21:21"
-      - "21100-21110:21100-21110"
+      - "21000-21010:21000-21010"
   redis:
     build: ./requirements/bonus/redis
     container_name: redis
