@@ -1,7 +1,7 @@
 #!/bin/sh
 
 if [ ! -f "/etc/vsftpd/vsftpd.conf.bak" ]; then
-
+    echo "first time to setup ftp"
     mkdir -p /var/www/wordpress
 
     cp /etc/vsftpd/vsftpd.conf /etc/vsftpd/vsftpd.conf.bak
@@ -19,3 +19,4 @@ fi
 
 echo "FTP started on :21"
 /usr/sbin/vsftpd /etc/vsftpd/vsftpd.conf
+
